@@ -12,7 +12,7 @@ jobs:
     
     strategy:
       matrix:
-        node-version: [16.x, 18.x, 20.x]
+        node-version: [18.x, 20.x]
     
     steps:
     - name: Checkout code
@@ -38,8 +38,7 @@ jobs:
 
     - name: Test packaging
       run: |
-        npm install -g @vscode/vsce
-        vsce package --out test-package.vsix
+        npx @vscode/vsce package --out test-package.vsix
 
     - name: Upload test artifacts
       if: matrix.node-version == '18.x'

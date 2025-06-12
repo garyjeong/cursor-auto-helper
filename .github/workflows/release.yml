@@ -33,11 +33,8 @@ jobs:
     - name: Compile TypeScript
       run: npm run compile
 
-    - name: Install VSCE
-      run: npm install -g @vscode/vsce
-
     - name: Package extension
-      run: vsce package
+      run: npx @vscode/vsce package
 
     - name: Get version from tag
       id: get_version
@@ -73,6 +70,6 @@ jobs:
 
     - name: Publish to VS Code Marketplace
       if: ${{ !contains(github.ref, 'beta') && !contains(github.ref, 'alpha') }}
-      run: vsce publish -p ${{ secrets.VSCE_PAT }}
+      run: npx @vscode/vsce publish -p ${{ secrets.VSCE_PAT }}
       env:
         VSCE_PAT: ${{ secrets.VSCE_PAT }} 

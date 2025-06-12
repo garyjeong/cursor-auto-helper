@@ -4,6 +4,8 @@ import { getWebviewScript } from "../src/webviewScript";
 import {
 	RESUME_BUTTON_SELECTORS,
 	RESUME_BUTTON_TEXT_PATTERNS,
+	SKIP_BUTTON_SELECTORS,
+	SKIP_BUTTON_TEXT_PATTERNS,
 } from "../src/types";
 
 // Mock vscode module
@@ -83,6 +85,10 @@ describe("AgentWatcher", () => {
 		const script = getWebviewScript(
 			RESUME_BUTTON_SELECTORS,
 			RESUME_BUTTON_TEXT_PATTERNS,
+			SKIP_BUTTON_SELECTORS,
+			SKIP_BUTTON_TEXT_PATTERNS,
+			5000,
+			true,
 			false
 		);
 		expect(typeof script).toBe("string");
@@ -94,6 +100,10 @@ describe("AgentWatcher", () => {
 		const script = getWebviewScript(
 			customSelectors,
 			RESUME_BUTTON_TEXT_PATTERNS,
+			SKIP_BUTTON_SELECTORS,
+			SKIP_BUTTON_TEXT_PATTERNS,
+			5000,
+			true,
 			true
 		);
 		expect(script).toContain(".custom-button");

@@ -5,7 +5,8 @@
   "version": "1.0.0",
   "publisher": "cursor-auto-resumer",
   "engines": {
-    "vscode": "^1.74.0"
+    "vscode": "^1.74.0",
+    "node": ">=18.0.0"
   },
   "categories": [
     "Other"
@@ -127,13 +128,13 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "jest",
-    "package": "vsce package",
+    "package": "npx @vscode/vsce package",
     "version:patch": "npm version patch --no-git-tag-version",
     "version:minor": "npm version minor --no-git-tag-version", 
     "version:major": "npm version major --no-git-tag-version",
     "release:prepare": "npm run compile && npm run test && npm run lint",
-    "release:package": "vsce package",
-    "release:publish": "vsce publish",
+    "release:package": "npx @vscode/vsce package",
+    "release:publish": "npx @vscode/vsce publish",
     "changelog": "node scripts/changelog.js",
     "release": "node scripts/release.js",
     "auto-release": "node scripts/auto-release.js",
