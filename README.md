@@ -300,6 +300,139 @@ vsce publish --verbose
 vsce package --verify
 ```
 
+## 🚀 자동 릴리스 스크립트 사용법
+
+이 프로젝트는 완전 자동화된 릴리스 시스템을 제공합니다.
+
+### 1. 완전 자동 릴리스 (대화형)
+
+```bash
+# 대화형 릴리스 프로세스 시작
+npm run auto-release
+```
+
+**기능:**
+- ✅ 환경 검증 (Git, Node.js, VSCE)
+- ✅ 작업 디렉토리 및 브랜치 검증
+- ✅ 릴리스 타입 선택 (patch/minor/major/custom/auto)
+- ✅ 자동 커밋 메시지 분석 (auto 모드)
+- ✅ 테스트 및 품질 검사
+- ✅ 체인지로그 자동 생성
+- ✅ VSIX 패키지 생성
+- ✅ Git 커밋 및 태그 생성
+- ✅ GitHub 푸시 (GitHub Actions 트리거)
+- ✅ VS Code Marketplace 직접 배포 옵션
+- ✅ 상세한 릴리스 리포트
+
+### 2. 빠른 릴리스 (비대화형)
+
+```bash
+# 패치 릴리스 (기본값)
+npm run quick-release
+
+# 마이너 릴리스
+npm run quick-release minor
+
+# 메이저 릴리스
+npm run quick-release major
+```
+
+**기능:**
+- 🚀 빠른 실행 (사용자 입력 없음)
+- ✅ 자동 테스트 및 빌드
+- ✅ 버전 업데이트
+- ✅ 체인지로그 업데이트
+- ✅ Git 커밋, 태그, 푸시
+- ✅ GitHub Actions 자동 트리거
+
+### 3. 기존 릴리스 스크립트
+
+```bash
+# 기본 릴리스 스크립트 (대화형)
+npm run release
+```
+
+### 4. 릴리스 타입별 설명
+
+| 타입 | 설명 | 예시 | 사용 시기 |
+|------|------|------|-----------|
+| **patch** | 버그 수정 | 1.0.0 → 1.0.1 | 버그 수정, 작은 개선 |
+| **minor** | 새 기능 | 1.0.0 → 1.1.0 | 새 기능 추가, 하위 호환 |
+| **major** | 호환성 변경 | 1.0.0 → 2.0.0 | API 변경, 호환성 깨짐 |
+| **custom** | 사용자 정의 | 1.0.0 → 1.2.3-beta | 특별한 버전 필요 시 |
+| **auto** | 자동 분석 | 커밋 메시지 기반 | 커밋 메시지로 자동 결정 |
+
+### 5. 자동 릴리스 타입 결정 (auto 모드)
+
+커밋 메시지를 분석하여 자동으로 릴리스 타입을 결정합니다:
+
+- **major**: `breaking`, `!:` 포함 시
+- **minor**: `feat`, `feature` 포함 시  
+- **patch**: 그 외 모든 경우 (기본값)
+
+### 6. 릴리스 전 체크리스트
+
+자동 릴리스 스크립트가 다음을 자동으로 확인합니다:
+
+- [ ] Git 저장소 상태
+- [ ] 작업 디렉토리 정리 상태
+- [ ] Node.js 및 npm 설치
+- [ ] VSCE 도구 설치
+- [ ] package.json 필수 필드
+- [ ] TypeScript 컴파일
+- [ ] ESLint 검사
+- [ ] 단위 테스트 통과
+
+### 7. 릴리스 후 자동 작업
+
+GitHub Actions가 자동으로 수행하는 작업:
+
+1. **코드 품질 검사**: 컴파일, 린팅, 테스트
+2. **VSIX 패키지 생성**: 배포용 패키지 빌드
+3. **GitHub Release 생성**: 릴리스 노트와 함께
+4. **체크섬 생성**: 보안을 위한 SHA256 해시
+5. **VS Code Marketplace 배포**: 자동 퍼블리싱
+6. **아티팩트 업로드**: 다운로드 가능한 파일들
+
+### 8. 문제 해결
+
+#### 일반적인 오류와 해결책
+
+```bash
+# VSCE 로그인 필요
+vsce login <your-publisher-name>
+
+# Git 상태 확인
+git status
+
+# 의존성 재설치
+npm ci
+
+# 캐시 정리
+npm run clean  # (필요시 추가)
+```
+
+#### 롤백 방법
+
+```bash
+# 마지막 릴리스 롤백
+git reset --hard HEAD~1
+git tag -d v1.0.1
+git push origin :refs/tags/v1.0.1
+
+# 강제 푸시 (주의!)
+git push origin main --force
+```
+
+### 9. 릴리스 모니터링
+
+릴리스 후 다음을 확인하세요:
+
+- **GitHub Actions**: [Actions 탭](https://github.com/your-username/cursor-auto-resumer/actions)
+- **GitHub Releases**: [Releases 페이지](https://github.com/your-username/cursor-auto-resumer/releases)
+- **VS Code Marketplace**: [확장 페이지](https://marketplace.visualstudio.com/items?itemName=your-publisher.cursor-auto-resumer)
+- **다운로드 통계**: Marketplace 대시보드
+
 ## 라이선스
 
 MIT License
