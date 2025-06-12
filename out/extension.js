@@ -1,0 +1,147 @@
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.deactivate = exports.activate = void 0;
+const vscode = __importStar(require("vscode"));
+const agentWatcher_1 = require("./agentWatcher");
+const config_1 = require("./config");
+let agentWatcher;
+let configManager;
+function activate(context) {
+    console.log("Cursor Auto Resumer extension is now active!");
+    configManager = config_1.ConfigManager.getInstance();
+    agentWatcher = new agentWatcher_1.AgentWatcher();
+    // Register commands
+    const commands = [
+        vscode.commands.registerCommand("cursorAutoResumer.enable", async () => {
+            await configManager.updateConfig("enabled", true);
+            agentWatcher?.start();
+            vscode.window.showInformationMessage("Cursor Auto Resumer enabled");
+        }),
+        vscode.commands.registerCommand("cursorAutoResumer.disable", async () => {
+            await configManager.updateConfig("enabled", false);
+            agentWatcher?.stop();
+            vscode.window.showInformationMessage("Cursor Auto Resumer disabled");
+        }),
+        vscode.commands.registerCommand("cursorAutoResumer.checkNow", async () => {
+            if (!agentWatcher) {
+                vscode.window.showErrorMessage("Agent Watcher not initialized");
+                return;
+            }
+            const result = await agentWatcher.checkNow();
+            const message = `Check completed: ${result.panelsFound} panels found, ${result.buttonsClicked} buttons clicked`;
+            if (result.errors.length > 0) {
+                vscode.window.showWarningMessage(`${message}. Errors: ${result.errors.length}`);
+            }
+            else {
+                vscode.window.showInformationMessage(message);
+            }
+        }),
+        vscode.commands.registerCommand("cursorAutoResumer.toggleDebug", async () => {
+            const config = configManager.getConfig();
+            const newDebugMode = !config.debugMode;
+            await configManager.updateConfig("debugMode", newDebugMode);
+            const message = `Debug mode ${newDebugMode ? "enabled" : "disabled"}`;
+            vscode.window.showInformationMessage(message);
+            configManager.log(message);
+        }),
+        vscode.commands.registerCommand("cursorAutoResumer.addCustomSelector", async () => {
+            const selector = await vscode.window.showInputBox({
+                prompt: "Enter a CSS selector for resume buttons",
+                placeHolder: 'e.g., .my-resume-button, [data-action="resume"]',
+                validateInput: (value) => {
+                    if (!value || value.trim().length === 0) {
+                        return "Selector cannot be empty";
+                    }
+                    try {
+                        document.querySelector(value);
+                        return null;
+                    }
+                    catch {
+                        return "Invalid CSS selector";
+                    }
+                },
+            });
+            if (selector) {
+                const config = configManager.getConfig();
+                const newSelectors = [...config.customSelectors, selector.trim()];
+                await configManager.updateConfig("customSelectors", newSelectors);
+                vscode.window.showInformationMessage(`Custom selector added: ${selector}`);
+            }
+        }),
+        vscode.commands.registerCommand("cursorAutoResumer.showStatus", () => {
+            if (!agentWatcher) {
+                vscode.window.showErrorMessage("Agent Watcher not initialized");
+                return;
+            }
+            const status = agentWatcher.getStatus();
+            const config = configManager.getConfig();
+            const statusMessage = [
+                `Status: ${status.isActive ? "Active" : "Inactive"}`,
+                `Panels monitored: ${status.panelCount}`,
+                `Check interval: ${config.checkInterval}ms`,
+                `Debug mode: ${config.debugMode ? "On" : "Off"}`,
+                `Custom selectors: ${config.customSelectors.length}`,
+            ].join("\n");
+            vscode.window.showInformationMessage(statusMessage, { modal: true });
+        }),
+    ];
+    // Register all commands
+    commands.forEach((command) => context.subscriptions.push(command));
+    // Listen for configuration changes
+    const configChangeListener = vscode.workspace.onDidChangeConfiguration((event) => {
+        if (event.affectsConfiguration("cursorAutoResumer")) {
+            configManager.refresh();
+            const config = configManager.getConfig();
+            if (config.enabled && !agentWatcher?.getStatus().isActive) {
+                agentWatcher?.start();
+            }
+            else if (!config.enabled && agentWatcher?.getStatus().isActive) {
+                agentWatcher?.stop();
+            }
+            configManager.log("Configuration updated");
+        }
+    });
+    context.subscriptions.push(configChangeListener);
+    // Start the watcher if enabled
+    const config = configManager.getConfig();
+    if (config.enabled) {
+        agentWatcher.start();
+    }
+    // Add disposables
+    context.subscriptions.push({
+        dispose: () => {
+            agentWatcher?.dispose();
+        },
+    });
+    configManager.log("Extension activated successfully");
+}
+exports.activate = activate;
+function deactivate() {
+    agentWatcher?.dispose();
+    configManager?.log("Extension deactivated");
+}
+exports.deactivate = deactivate;
+//# sourceMappingURL=extension.js.map
