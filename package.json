@@ -52,6 +52,21 @@
         "command": "cursorAutoResumer.showStatus",
         "title": "Show Status",
         "category": "Cursor Auto Resumer"
+      },
+      {
+        "command": "cursorAutoResumer.enableSkip",
+        "title": "Enable Skip Button",
+        "category": "Cursor Auto Resumer"
+      },
+      {
+        "command": "cursorAutoResumer.disableSkip",
+        "title": "Disable Skip Button",
+        "category": "Cursor Auto Resumer"
+      },
+      {
+        "command": "cursorAutoResumer.setSkipDelay",
+        "title": "Set Skip Button Delay",
+        "category": "Cursor Auto Resumer"
       }
     ],
     "configuration": {
@@ -81,6 +96,26 @@
           "type": "boolean",
           "default": false,
           "description": "Enable debug logging"
+        },
+        "cursorAutoResumer.skipButtonEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable automatic skip button functionality"
+        },
+        "cursorAutoResumer.skipButtonDelay": {
+          "type": "number",
+          "default": 5000,
+          "minimum": 1000,
+          "maximum": 30000,
+          "description": "Delay before clicking skip button in milliseconds (1-30 seconds)"
+        },
+        "cursorAutoResumer.skipButtonCustomSelectors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Custom CSS selectors for skip buttons"
         }
       }
     }

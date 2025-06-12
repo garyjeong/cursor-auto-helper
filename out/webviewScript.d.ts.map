@@ -1,1 +1,1 @@
-{"version":3,"file":"webviewScript.d.ts","sourceRoot":"","sources":["../src/webviewScript.ts"],"names":[],"mappings":"AAAA,wBAAgB,gBAAgB,CAC/B,SAAS,EAAE,MAAM,EAAE,EACnB,YAAY,EAAE,MAAM,EAAE,EACtB,SAAS,EAAE,OAAO,GAChB,MAAM,CAoLR"}
+{"version":3,"file":"webviewScript.d.ts","sourceRoot":"","sources":["../src/webviewScript.ts"],"names":[],"mappings":"AAAA,wBAAgB,gBAAgB,CAC/B,eAAe,EAAE,MAAM,EAAE,EACzB,kBAAkB,EAAE,MAAM,EAAE,EAC5B,aAAa,EAAE,MAAM,EAAE,EACvB,gBAAgB,EAAE,MAAM,EAAE,EAC1B,SAAS,EAAE,MAAM,EACjB,WAAW,EAAE,OAAO,EACpB,SAAS,EAAE,OAAO,GAChB,MAAM,CAwQR"}

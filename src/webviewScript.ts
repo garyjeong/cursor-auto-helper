@@ -1,16 +1,30 @@
 export function getWebviewScript(
-	selectors: string[],
-	textPatterns: RegExp[],
+	resumeSelectors: string[],
+	resumeTextPatterns: RegExp[],
+	skipSelectors: string[],
+	skipTextPatterns: RegExp[],
+	skipDelay: number,
+	skipEnabled: boolean,
 	debugMode: boolean
 ): string {
 	return `
     (function() {
       const vscode = acquireVsCodeApi();
-      let lastClickTime = 0;
+      let lastResumeClickTime = 0;
+      let lastSkipClickTime = 0;
+      let skipTimer = null;
       const CLICK_COOLDOWN = 2000; // 2 seconds cooldown between clicks
       
-      const selectors = ${JSON.stringify(selectors)};
-      const textPatterns = ${JSON.stringify(textPatterns.map((p) => p.source))};
+      const resumeSelectors = ${JSON.stringify(resumeSelectors)};
+      const resumeTextPatterns = ${JSON.stringify(
+				resumeTextPatterns.map((p) => p.source)
+			)};
+      const skipSelectors = ${JSON.stringify(skipSelectors)};
+      const skipTextPatterns = ${JSON.stringify(
+				skipTextPatterns.map((p) => p.source)
+			)};
+      const skipDelay = ${skipDelay};
+      const skipEnabled = ${skipEnabled};
       const debugMode = ${debugMode};
       
       function log(message, level = 'info') {
@@ -24,7 +38,7 @@ export function getWebviewScript(
         }
       }
       
-      function findResumeButtons() {
+      function findButtonsBySelectors(selectors, textPatterns, buttonType) {
         const buttons = [];
         
         // Search by CSS selectors
@@ -37,7 +51,7 @@ export function getWebviewScript(
               }
             });
           } catch (e) {
-            log('Invalid selector: ' + selector, 'warn');
+            log('Invalid ' + buttonType + ' selector: ' + selector, 'warn');
           }
         });
         
@@ -65,10 +79,18 @@ export function getWebviewScript(
         });
       }
       
-      function clickButton(button) {
+      function findResumeButtons() {
+        return findButtonsBySelectors(resumeSelectors, resumeTextPatterns, 'resume');
+      }
+      
+      function findSkipButtons() {
+        return findButtonsBySelectors(skipSelectors, skipTextPatterns, 'skip');
+      }
+      
+      function clickButton(button, buttonType, lastClickTimeVar) {
         const now = Date.now();
-        if (now - lastClickTime < CLICK_COOLDOWN) {
-          log('Click cooldown active, skipping click');
+        if (now - lastClickTimeVar < CLICK_COOLDOWN) {
+          log(buttonType + ' click cooldown active, skipping click');
           return false;
         }
         
@@ -84,11 +106,16 @@ export function getWebviewScript(
             }));
           }
           
-          lastClickTime = now;
-          log('Resume button clicked: ' + (button.textContent || button.className));
+          if (buttonType === 'resume') {
+            lastResumeClickTime = now;
+          } else if (buttonType === 'skip') {
+            lastSkipClickTime = now;
+          }
+          
+          log(buttonType + ' button clicked: ' + (button.textContent || button.className));
           
           vscode.postMessage({
-            type: 'resume-button-clicked',
+            type: buttonType + '-button-clicked',
             data: {
               text: button.textContent,
               className: button.className,
@@ -99,7 +126,7 @@ export function getWebviewScript(
           
           return true;
         } catch (error) {
-          log('Error clicking button: ' + error.message, 'error');
+          log('Error clicking ' + buttonType + ' button: ' + error.message, 'error');
           vscode.postMessage({
             type: 'error',
             data: { error: error.message },
@@ -109,27 +136,88 @@ export function getWebviewScript(
         }
       }
       
-      function checkForResumeButtons() {
-        try {
-          const buttons = findResumeButtons();
+      function cancelSkipTimer() {
+        if (skipTimer) {
+          clearTimeout(skipTimer);
+          skipTimer = null;
+          log('Skip timer cancelled');
+          vscode.postMessage({
+            type: 'skip-button-cancelled',
+            data: {},
+            timestamp: Date.now()
+          });
+        }
+      }
+      
+      function scheduleSkipClick(button) {
+        // Cancel existing timer
+        cancelSkipTimer();
+        
+        log('Skip button scheduled for click in ' + (skipDelay / 1000) + ' seconds');
+        vscode.postMessage({
+          type: 'skip-button-scheduled',
+          data: { delay: skipDelay },
+          timestamp: Date.now()
+        });
+        
+        skipTimer = setTimeout(() => {
+          // Double-check if resume button appeared
+          const resumeButtons = findResumeButtons();
+          if (resumeButtons.length > 0) {
+            log('Resume button found, cancelling skip click');
+            cancelSkipTimer();
+            return;
+          }
           
-          if (buttons.length > 0) {
-            log('Found ' + buttons.length + ' resume button(s)');
+          // Click skip button
+          clickButton(button, 'skip', lastSkipClickTime);
+          skipTimer = null;
+        }, skipDelay);
+      }
+      
+      function checkForButtons() {
+        try {
+          // Check for resume buttons first (higher priority)
+          const resumeButtons = findResumeButtons();
+          
+          if (resumeButtons.length > 0) {
+            log('Found ' + resumeButtons.length + ' resume button(s)');
+            
+            // Cancel any pending skip clicks
+            cancelSkipTimer();
             
             vscode.postMessage({
               type: 'resume-button-found',
-              data: { count: buttons.length },
+              data: { count: resumeButtons.length },
               timestamp: Date.now()
             });
             
-            // Click the first visible button
-            const clicked = clickButton(buttons[0]);
+            // Click the first visible resume button
+            const clicked = clickButton(resumeButtons[0], 'resume', lastResumeClickTime);
             return clicked;
+          }
+          
+          // Check for skip buttons only if skip is enabled and no resume buttons
+          if (skipEnabled) {
+            const skipButtons = findSkipButtons();
+            
+            if (skipButtons.length > 0 && !skipTimer) {
+              log('Found ' + skipButtons.length + ' skip button(s)');
+              
+              vscode.postMessage({
+                type: 'skip-button-found',
+                data: { count: skipButtons.length },
+                timestamp: Date.now()
+              });
+              
+              // Schedule skip click
+              scheduleSkipClick(skipButtons[0]);
+            }
           }
           
           return false;
         } catch (error) {
-          log('Error in checkForResumeButtons: ' + error.message, 'error');
+          log('Error in checkForButtons: ' + error.message, 'error');
           vscode.postMessage({
             type: 'error',
             data: { error: error.message },
@@ -140,8 +228,8 @@ export function getWebviewScript(
       }
       
       // Initial check
-      log('Webview script initialized');
-      checkForResumeButtons();
+      log('Webview script initialized with skip enabled: ' + skipEnabled);
+      checkForButtons();
       
       // Set up mutation observer to watch for DOM changes
       const observer = new MutationObserver((mutations) => {
@@ -164,7 +252,7 @@ export function getWebviewScript(
         });
         
         if (shouldCheck) {
-          setTimeout(checkForResumeButtons, 100); // Small delay to let DOM settle
+          setTimeout(checkForButtons, 100); // Small delay to let DOM settle
         }
       });
       
@@ -177,7 +265,7 @@ export function getWebviewScript(
       });
       
       // Periodic check as fallback
-      setInterval(checkForResumeButtons, 5000);
+      setInterval(checkForButtons, 5000);
       
       log('DOM observer and periodic checker started');
     })();

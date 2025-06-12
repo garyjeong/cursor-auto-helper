@@ -1,13 +1,15 @@
-# Cursor IDE Agent Resume 자동화 확장
+# Cursor IDE Agent Resume & Skip 자동화 확장
 
 ## 목적
 
-Cursor IDE(또는 VSCode)에서 모든 Agent(에이전트) 채팅 창의 "Resume" 버튼을 자동으로 감지/클릭하여, 채팅이 자동으로 재개(resume)되도록 지원합니다.
+Cursor IDE(또는 VSCode)에서 모든 Agent(에이전트) 채팅 창의 "Resume" 및 "Skip" 버튼을 자동으로 감지/클릭하여, 채팅이 자동으로 재개(resume)되거나 건너뛰기(skip)되도록 지원합니다.
 
 ## 주요 기능
 
 - **Agent 패널 자동 탐색**: IDE 내 모든 Agent/AI 패널(Webview 기반) 자동 탐색 및 감시
-- **Resume 버튼 자동 감지**: Resume 버튼 자동 감지 및 클릭
+- **Resume 버튼 자동 감지**: Resume 버튼 자동 감지 및 즉시 클릭
+- **Skip 버튼 자동 감지**: Skip 버튼 자동 감지 및 지연 클릭 (기본: 5초)
+- **우선순위 로직**: Resume 버튼이 나타나면 Skip 클릭 취소
 - **다중 패널 지원**: 여러 패널 동시 지원
 - **유연한 UI 지원**: Webview/네이티브 UI 모두 지원
 - **커스터마이즈**: 자동화 on/off 및 selector 커스터마이즈 옵션 제공
@@ -20,6 +22,7 @@ Cursor IDE(또는 VSCode)에서 모든 Agent(에이전트) 채팅 창의 "Resume
   - Webview 패널 제어 및 스크립트 주입
   - VSCode 명령(Command) 자동 실행
   - 확장 설정(Configuration) 제공
+  - 타이머 기반 지연 클릭 시스템
 
 ## 프로젝트 구조
 
@@ -27,7 +30,7 @@ Cursor IDE(또는 VSCode)에서 모든 Agent(에이전트) 채팅 창의 "Resume
 cursor-auto-resumer/
 ├── src/
 │   ├── extension.ts           # 확장 진입점, Agent 패널 탐색 및 제어
-│   ├── agentWatcher.ts        # Agent 패널/웹뷰 감시 및 resume 자동화 로직
+│   ├── agentWatcher.ts        # Agent 패널/웹뷰 감시 및 resume/skip 자동화 로직
 │   ├── webviewScript.ts       # Webview에 주입되는 DOM 감시/자동 클릭 스크립트
 │   ├── config.ts              # 확장 설정 관리
 │   └── types.ts               # TypeScript 타입 정의
@@ -49,27 +52,44 @@ cursor-auto-resumer/
 - 각 패널에 TypeScript로 작성된 JavaScript 주입 시도
 
 ### 2. Resume 버튼 감지 및 자동 클릭
-- 주입된 스크립트는 1초마다 DOM을 감시하여 resume 버튼 탐색
+- 주입된 스크립트는 실시간으로 DOM을 감시하여 resume 버튼 탐색
 - 지원하는 selector 패턴:
   - `button[data-testid="resume"]`
   - `button:contains("Resume")`
   - `button:contains("재개")`
   - 사용자 정의 selector
-- 버튼이 감지되면 자동 클릭, 이미 resume된 상태면 추가 동작 없음
+- 버튼이 감지되면 **즉시 자동 클릭**
 
-### 3. 여러 패널 동시 지원
+### 3. Skip 버튼 감지 및 지연 클릭 (신규 기능)
+- Skip 버튼 자동 감지 및 **설정 가능한 지연 시간 후 클릭** (기본: 5초)
+- 지원하는 selector 패턴:
+  - `button[data-testid="skip"]`
+  - `button:contains("Skip")`
+  - `button:contains("건너뛰기")`
+  - 사용자 정의 selector
+- **우선순위 로직**: Resume 버튼이 나타나면 Skip 타이머 즉시 취소
+
+### 4. 여러 패널 동시 지원
 - 각 Webview별로 독립적으로 감시/자동화 수행
 - 패널별 상태 관리로 중복 클릭 방지
+- Resume/Skip 버튼 통계 관리
 
-### 4. 네이티브 UI 지원
+### 5. 네이티브 UI 지원
 - Webview가 아닌 경우, resume 관련 커맨드 자동 실행
 - 지원 커맨드: `workbench.action.chat.resume` 등
 
-### 5. 설정 옵션
+### 6. 설정 옵션
+
+#### Resume 버튼 설정
 - `cursorAutoResumer.enabled`: 자동 resume 기능 활성화/비활성화
 - `cursorAutoResumer.checkInterval`: 감시 주기 (기본값: 1000ms)
 - `cursorAutoResumer.customSelectors`: 사용자 정의 resume 버튼 selector 배열
 - `cursorAutoResumer.debugMode`: 디버그 로그 활성화
+
+#### Skip 버튼 설정 (신규)
+- `cursorAutoResumer.skipButtonEnabled`: Skip 버튼 기능 활성화/비활성화 (기본값: true)
+- `cursorAutoResumer.skipButtonDelay`: Skip 버튼 클릭 지연 시간 (기본값: 5000ms, 범위: 1-30초)
+- `cursorAutoResumer.skipButtonCustomSelectors`: 사용자 정의 skip 버튼 selector 배열
 
 ## 설치 및 사용법
 
@@ -90,19 +110,38 @@ npm run watch
 
 ### 사용법
 
-1. 확장 설치 후, 기본적으로 자동 resume 기능이 활성화됩니다.
-2. 설정에서 자동화 on/off, resume 버튼 selector를 변경할 수 있습니다:
+1. 확장 설치 후, 기본적으로 자동 resume 및 skip 기능이 활성화됩니다.
+2. 설정에서 자동화 on/off, 버튼 selector, 지연 시간을 변경할 수 있습니다:
    - `Ctrl+,` → "Cursor Auto Resumer" 검색
 3. 명령 팔레트(`Ctrl+Shift+P`)에서 다음 명령 사용 가능:
-   - `Cursor Auto Resumer: Enable`
-   - `Cursor Auto Resumer: Disable`
-   - `Cursor Auto Resumer: Check Now`
+
+#### 기본 명령
+   - `Cursor Auto Resumer: Enable` - 확장 활성화
+   - `Cursor Auto Resumer: Disable` - 확장 비활성화
+   - `Cursor Auto Resumer: Check Now` - 즉시 체크 실행
+   - `Cursor Auto Resumer: Show Status` - 현재 상태 표시
+
+#### Skip 버튼 명령 (신규)
+   - `Cursor Auto Resumer: Enable Skip Button` - Skip 기능 활성화
+   - `Cursor Auto Resumer: Disable Skip Button` - Skip 기능 비활성화
+   - `Cursor Auto Resumer: Set Skip Button Delay` - Skip 지연 시간 설정
+
+## 동작 플로우
+
+```
+DOM 변경 감지 → 버튼 스캔 → Resume 버튼 발견? → 즉시 클릭
+                           ↓
+                    Skip 버튼 발견? → 5초 타이머 시작 → Resume 나타남? → 타이머 취소
+                                                    ↓
+                                              5초 후 Skip 클릭
+```
 
 ## 보안 및 주의사항
 
 - **CSP 정책**: Webview의 Content Security Policy에 따라 일부 패널에서는 자동화가 제한될 수 있습니다.
-- **DOM 구조 변경**: resume 버튼의 DOM 구조가 변경될 경우, 설정에서 selector를 수정해 주세요.
+- **DOM 구조 변경**: 버튼의 DOM 구조가 변경될 경우, 설정에서 selector를 수정해 주세요.
 - **성능**: 주기적 감시로 인한 성능 영향을 최소화하기 위해 효율적인 DOM 쿼리를 사용합니다.
+- **타이머 관리**: Skip 버튼 타이머는 적절히 정리되어 메모리 누수를 방지합니다.
 
 ## 개발 가이드
 

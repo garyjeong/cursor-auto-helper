@@ -42,6 +42,9 @@ class ConfigManager {
             checkInterval: this.config.get("checkInterval", types_1.DEFAULT_CONFIG.checkInterval),
             customSelectors: this.config.get("customSelectors", types_1.DEFAULT_CONFIG.customSelectors),
             debugMode: this.config.get("debugMode", types_1.DEFAULT_CONFIG.debugMode),
+            skipButtonEnabled: this.config.get("skipButtonEnabled", types_1.DEFAULT_CONFIG.skipButtonEnabled),
+            skipButtonDelay: this.config.get("skipButtonDelay", types_1.DEFAULT_CONFIG.skipButtonDelay),
+            skipButtonCustomSelectors: this.config.get("skipButtonCustomSelectors", types_1.DEFAULT_CONFIG.skipButtonCustomSelectors),
         };
     }
     async updateConfig(key, value) {
@@ -56,8 +59,14 @@ class ConfigManager {
         if (config.checkInterval < 500 || config.checkInterval > 10000) {
             errors.push("Check interval must be between 500 and 10000 milliseconds");
         }
+        if (config.skipButtonDelay < 1000 || config.skipButtonDelay > 30000) {
+            errors.push("Skip button delay must be between 1000 and 30000 milliseconds");
+        }
         if (!Array.isArray(config.customSelectors)) {
             errors.push("Custom selectors must be an array");
+        }
+        if (!Array.isArray(config.skipButtonCustomSelectors)) {
+            errors.push("Skip button custom selectors must be an array");
         }
         return errors;
     }
@@ -65,7 +74,7 @@ class ConfigManager {
         const config = this.getConfig();
         if (config.debugMode || level === "error") {
             const timestamp = new Date().toISOString();
-            const logMessage = `[${timestamp}] [Cursor Auto Resumer] ${message}`;
+            const logMessage = `[${timestamp}] [Cursor Auto Resumer] [${level.toUpperCase()}] ${message}`;
             switch (level) {
                 case "error":
                     console.error(logMessage);

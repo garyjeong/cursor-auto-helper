@@ -1,2 +1,2 @@
-export declare function getWebviewScript(selectors: string[], textPatterns: RegExp[], debugMode: boolean): string;
+export declare function getWebviewScript(resumeSelectors: string[], resumeTextPatterns: RegExp[], skipSelectors: string[], skipTextPatterns: RegExp[], skipDelay: number, skipEnabled: boolean, debugMode: boolean): string;
 //# sourceMappingURL=webviewScript.d.ts.map

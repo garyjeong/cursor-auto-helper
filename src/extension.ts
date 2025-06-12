@@ -101,10 +101,58 @@ export function activate(context: vscode.ExtensionContext) {
 				`Check interval: ${config.checkInterval}ms`,
 				`Debug mode: ${config.debugMode ? "On" : "Off"}`,
 				`Custom selectors: ${config.customSelectors.length}`,
+				`Skip button: ${config.skipButtonEnabled ? "Enabled" : "Disabled"}`,
+				`Skip delay: ${config.skipButtonDelay}ms`,
+				`Skip custom selectors: ${config.skipButtonCustomSelectors.length}`,
 			].join("\n");
 
 			vscode.window.showInformationMessage(statusMessage, { modal: true });
 		}),
+
+		vscode.commands.registerCommand(
+			"cursorAutoResumer.enableSkip",
+			async () => {
+				await configManager.updateConfig("skipButtonEnabled", true);
+				vscode.window.showInformationMessage(
+					"Skip button functionality enabled"
+				);
+			}
+		),
+
+		vscode.commands.registerCommand(
+			"cursorAutoResumer.disableSkip",
+			async () => {
+				await configManager.updateConfig("skipButtonEnabled", false);
+				vscode.window.showInformationMessage(
+					"Skip button functionality disabled"
+				);
+			}
+		),
+
+		vscode.commands.registerCommand(
+			"cursorAutoResumer.setSkipDelay",
+			async () => {
+				const delayInput = await vscode.window.showInputBox({
+					prompt: "Enter skip button delay in seconds",
+					placeHolder: "5",
+					validateInput: (value) => {
+						const num = parseFloat(value);
+						if (isNaN(num) || num < 1 || num > 30) {
+							return "Delay must be between 1 and 30 seconds";
+						}
+						return null;
+					},
+				});
+
+				if (delayInput) {
+					const delayMs = parseFloat(delayInput) * 1000;
+					await configManager.updateConfig("skipButtonDelay", delayMs);
+					vscode.window.showInformationMessage(
+						`Skip button delay set to ${delayInput} seconds`
+					);
+				}
+			}
+		),
 	];
 
 	// Register all commands

@@ -33,6 +33,7 @@
 ### **5단계: 로컬 테스트**
 - [ ] VSIX 패키지 생성: `vsce package`
 - [ ] 패키지 파일 생성 확인 (`.vsix` 파일)
+
 - [ ] 로컬 설치 테스트: `code --install-extension *.vsix`
 - [ ] VSCode에서 확장 동작 확인
 
