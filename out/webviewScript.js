@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getWebviewScript = void 0;
+exports.getWebviewScript = getWebviewScript;
 function getWebviewScript(resumeSelectors, resumeTextPatterns, skipSelectors, skipTextPatterns, skipDelay, skipEnabled, debugMode) {
     return `
     (function() {
@@ -262,5 +262,4 @@ function getWebviewScript(resumeSelectors, resumeTextPatterns, skipSelectors, sk
     })();
   `;
 }
-exports.getWebviewScript = getWebviewScript;
 //# sourceMappingURL=webviewScript.js.map

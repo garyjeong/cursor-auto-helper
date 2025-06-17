@@ -125,12 +125,12 @@ sequenceDiagram
 
 ## 6. 개발 및 테스트
 
-- **개발 환경 설정**: `npm install`
-- **실시간 컴파일**: `npm run watch`
+- **개발 환경 설정**: `pnpm install`
+- **실시간 컴파일**: `pnpm run watch`
 - **디버깅**: `F5` 키로 Extension Development Host 실행
-- **단위 테스트**: `npm test`
-- **코드 린팅**: `npm run lint`
-- **프로덕션 빌드**: `npm run package` (Webpack 번들링 포함)
+- **단위 테스트**: `pnpm test`
+- **코드 린팅**: `pnpm run lint`
+- **프로덕션 빌드**: `pnpm run package` (Webpack 번들링 포함)
 
 ## 7. 설정 옵션
 
@@ -176,8 +176,8 @@ sequenceDiagram
 
 ### 1. 개발 환경 설정
 ```bash
-npm install
-npm run compile
+pnpm install
+pnpm run compile
 ```
 
 ### 2. 디버깅
@@ -186,17 +186,17 @@ npm run compile
 
 ### 3. 테스트 실행
 ```bash
-npm test
+pnpm test
 ```
 
 ### 4. 린팅
 ```bash
-npm run lint
+pnpm run lint
 ```
 
 ### 5. 패키징
 ```bash
-npm run package
+pnpm run package
 ```
 
 ## 11. 설치 방법

@@ -15,7 +15,7 @@ module.exports = {
   moduleFileExtensions: ['ts', 'js', 'json'],
   setupFilesAfterEnv: [],
   testTimeout: 10000,
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^vscode$': '<rootDir>/tests/__mocks__/vscode.js'
   }
 }; 
